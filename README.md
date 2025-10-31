@@ -21,7 +21,6 @@ geodataframe? Which data structure allows for data schema (pre-defined data stru
 column names)
 
 Part II:
-1) Calculate the number of agricultural pixels in each district (i.e., each polygon) in 2004 and in
-2009.
+1) Calculate the number of agricultural pixels in each district (i.e., each polygon) in 2004 and in 2009.
 2) In a final print statement, report the amount of agricultural land as a percentage of the total
 number of pixels in each district in 2004 and in 2009 (i.e., print these six values).
