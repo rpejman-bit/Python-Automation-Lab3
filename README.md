@@ -1,4 +1,3 @@
-GEOG 4092/5092: Assignment 3
 Vector encoding
 Goal: Learn to encode vector geometry. Gain familiarity with Shapely, and Geopandas properties.
 Data: Download the file lab3.zip from Canvas and unzip it into your home directory. The data folder
