@@ -1,0 +1,72 @@
+import os
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+from shapely.geometry import Point, Polygon
+from shapely import geometry
+import rasterio
+from rasterio.mask import mask
+from rasterstats import zonal_stats
+
+
+#PART 1
+path='./District'
+district_lst=['district01.txt','district05.txt','district06.txt']
+data=[]
+
+#Read the text files and extract the x, y coordinates for each district
+for districts in district_lst:
+   df=pd.read_csv(f"{path}/{districts}",sep='\s+')
+   x_coords = df['X'].tolist()
+   y_coords = df['Y'].tolist()
+   x_ylist= list(zip(x_coords,y_coords))
+
+#Create a polygon from each file and create a geodataframe with the following two fields:'num_coords’ and ‘district’. ‘num_coords’= number of vertices or coordinate pairs used to encode each polygon.
+#‘districts’ should be the suffix of each text file (i.e., ‘01’, ‘05’ or ‘06’).
+
+polygon = geometry.Polygon(x_ylist)
+district=(districts[-6:-4])
+data.append({"districts":district,"num_coords":len(x_ylist),"geometry":polygon})
+gdf=gpd.GeoDataFrame(data,geometry="geometry",crs="EPSG:4326")
+gdf.to_file("districts.gpkg", driver="GPKG")
+
+
+#PART 2
+#Read our gpd file
+gdf = gpd.read_file("districts.gpkg")
+
+#Clip the Polygon with the TIF file
+file_path = r"/content/Agriculture"
+agriculture_raster=[f"{file_path}/GLOBCOVER_2004_lab2.tif",f"{file_path}/GLOBCOVER_2009_lab2.tif"]
+
+for raster in agriculture_raster:
+    with rasterio.open(raster) as src:
+    year = raster.split("_")[-2]
+
+for index, row in gdf.iterrows():
+district_name = row["districts"]
+district_geom = [row["geometry"]]
+full_raster=src.read(1)
+
+
+#Clip the raster
+
+out_image, out_transform = mask(src, district_geom, crop=True)
+cropped_raster = out_image
+
+#Get the count of 1 values (agricultural pixels in clipped layer)
+           ag_sum_clip = np.count_nonzero(cropped_raster == 1)
+          # print(f"Raster: {raster}, District: {district_name}, Count of
+agriculture pixels: {ag_sum_clip}")
+
+
+#Count of 1 values in TIF layer
+ag_sum=np.count_nonzero(full_raster==1)
+# print(f"Raster: {raster}, District: {district_name}, Count of
+agriculture pixels: {ag_sum}")
+
+#Divide to get a percentage of amount of agricultural land as a percentage of the
+total number of pixels in each district in 2004 and in 2009
+percentage_agland=ag_sum_clip/ag_sum*100
+print(f"The number of pixels in district {district_name} in {year} as a
+percentage of agriculture land is {percentage_agland:.2f}%")
